@@ -1,0 +1,25 @@
+# Node dependencies
+node_modules/
+npm-debug.log
+
+# Python cache & venv
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment secrets
+.env
+.env.local
+
+# Build & Dart output
+build/
+dist/
+.dart_tool/
+.idea/
+*.apk
+*.aab
+
+# OS & Temp
+.DS_Store
+Thumbs.db

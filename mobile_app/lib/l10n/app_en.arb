@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "appTitle": "EkVidya - Unified ST Scholarship",
+  "loginTitle": "Welcome to EkVidya",
+  "loginSubtitle": "Ministry of Tribal Affairs Scholarship Portal",
+  "enterMobileOrEmail": "Mobile Number / Email",
+  "enterPassword": "Password",
+  "enterOtp": "Enter 6-Digit OTP",
+  "loginButton": "Login & Verify",
+  "dashboardTitle": "ST Scholarship Dashboard",
+  "totalDisbursed": "Total Disbursed",
+  "totalSanctioned": "Total Sanctioned",
+  "schemesHeader": "Unified Schemes (5 Portals)",
+  "applyNow": "Apply Now",
+  "underVerification": "Under Verification",
+  "disbursed": "Disbursed via DBT",
+  "documentWallet": "Digital Document Wallet",
+  "reuseDocument": "Reuse in New Application",
+  "aiChatbot": "EkVidya AI Assistant",
+  "adminReview": "Verifier Manual Queue",
+  "oneActiveSchemeWarning": "Only one active scheme application permitted at a time"
+}

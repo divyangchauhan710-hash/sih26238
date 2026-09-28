@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EkVidya - Unified ST Scholarship Mobile App</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .phone-container {
+      width: 380px;
+      height: 760px;
+      background: #f4f6f9;
+      border-radius: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 10px #1f2428;
+      overflow: hidden;
+      position: relative;
+      color: #111;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: #0d47a1;
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+    .header h2 { margin: 0; font-size: 20px; }
+    .header p { margin: 4px 0 0 0; font-size: 11px; opacity: 0.8; }
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+    .summary-card {
+      background: linear-gradient(135deg, #0d47a1, #1e88e5);
+      color: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .scheme-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-orange { background: #fff3e0; color: #e65100; }
+    .badge-blue { background: #e3f2fd; color: #1565c0; }
+    .btn {
+      background: #00796b;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .btn-blue { background: #1565c0; }
+    .nav-bar {
+      background: white;
+      border-top: 1px solid #e1e4e8;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+    }
+    .nav-item {
+      font-size: 11px;
+      text-align: center;
+      color: #666;
+      cursor: pointer;
+    }
+    .nav-item.active { color: #0d47a1; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>EkVidya Mobile Simulator</h1>
+  <p>Unified ST Scholarship Platform — Ministry of Tribal Affairs (SIH26238 Prototype)</p>
+
+  <div class="phone-container">
+    <div class="header">
+      <h2>एकविद्या EkVidya</h2>
+      <p>Scheduled Tribe Scholarship Gateway</p>
+    </div>
+
+    <div class="content" id="appContent">
+      <div class="summary-card">
+        <div style="font-size:12px; opacity:0.8;">Total Disbursed (DBT)</div>
+        <div style="font-size:24px; font-weight:bold; margin: 4px 0 10px 0;">₹25,000</div>
+        <div style="display:flex; justify-content:space-between; font-size:12px;">
+          <span>Sanctioned: ₹25,000</span>
+          <span style="margin-left:auto;">Pending Checks: 1</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:15px; margin: 10px 0;">Ministry ST Schemes (5 Unified Portals)</h3>
+
+      <div class="scheme-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:bold; font-size:13px; color:#1565c0;">POST_MATRIC</span>
+          <span class="badge badge-green">Disbursed via DBT</span>
+        </div>
+        <h4 style="margin: 8px 0 4px 0;">Post-Matric Scholarship for ST</h4>
+        <div style="font-size:12px; color:#666;">Max Benefit: ₹25,000 / year</div>
+        <button class="btn btn-blue" onclick="alert('Viewing Timeline: Submitted ➔ Verifications Passed ➔ Sanctioned ➔ DBT Disbursed')">View Timeline</button>
+      </div>
+
+      <div class="scheme-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:bold; font-size:13px; color:#1565c0;">NFST</span>
+          <span class="badge badge-orange">Under Verification</span>
+        </div>
+        <h4 style="margin: 8px 0 4px 0;">National Fellowship for ST (NFST)</h4>
+        <div style="font-size:12px; color:#666;">Max Benefit: ₹31,000 / month</div>
+        <button class="btn btn-blue" onclick="alert('Verification Alert: e-District income mismatch flagged for verifier review.')">View Timeline</button>
+      </div>
+
+      <div class="scheme-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:bold; font-size:13px; color:#1565c0;">PRE_MATRIC</span>
+          <span class="badge badge-blue">Not Applied</span>
+        </div>
+        <h4 style="margin: 8px 0 4px 0;">Pre-Matric Scholarship for ST</h4>
+        <div style="font-size:12px; color:#666;">Max Benefit: ₹4,000 / year</div>
+        <button class="btn" onclick="alert('Policy Check: Cannot apply because you already have active application under NFST scheme.')">Apply Now</button>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <div class="nav-item active">📱 Dashboard</div>
+      <div class="nav-item" onclick="alert('Opening DigiLocker Document Wallet...')">📁 Wallet</div>
+      <div class="nav-item" onclick="alert('Opening EkVidya AI Assistant...')">🤖 AI Bot</div>
+      <div class="nav-item" onclick="alert('Opening Verifier Queue...')">🛡️ Admin</div>
+    </div>
+  </div>
+</body>
+</html>

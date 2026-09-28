@@ -1,0 +1,22 @@
+{
+  "@@locale": "hi",
+  "appTitle": "एकविद्या - एकीकृत एसटी छात्रवृत्ति",
+  "loginTitle": "एकविद्या में आपका स्वागत है",
+  "loginSubtitle": "जनजातीय कार्य मंत्रालय छात्रवृत्ति पोर्टल",
+  "enterMobileOrEmail": "मोबाइल नंबर / ईमेल",
+  "enterPassword": "पासवर्ड",
+  "enterOtp": "6-अंकों का ओटीपी दर्ज करें",
+  "loginButton": "लॉगिन एवं सत्यापन",
+  "dashboardTitle": "एसटी छात्रवृत्ति डैशबोर्ड",
+  "totalDisbursed": "कुल हस्तांतरित (DBT)",
+  "totalSanctioned": "कुल स्वीकृत राशि",
+  "schemesHeader": "एकीकृत योजनाएं (5 पोर्टल)",
+  "applyNow": "आवेदन करें",
+  "underVerification": "सत्यापन प्रक्रिया में",
+  "disbursed": "डीबीटी द्वारा हस्तांतरित",
+  "documentWallet": "डिजिटल दस्तावेज़ वॉलेट",
+  "reuseDocument": "पुनः उपयोग करें",
+  "aiChatbot": "एकविद्या एआई सहायक",
+  "adminReview": "सत्यापनकर्ता समीक्षा कतार",
+  "oneActiveSchemeWarning": "एक समय में केवल एक सक्रिय योजना आवेदन की अनुमति है"
+}

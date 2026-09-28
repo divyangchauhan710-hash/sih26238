@@ -1,0 +1,181 @@
+// Prisma Schema for EkVidya - Unified ST Scholarship Mobile Platform
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  VERIFIER
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_VERIFICATION
+  SANCTIONED
+  DISBURSED
+  REJECTED
+}
+
+enum CheckType {
+  IDENTITY
+  ST_CERTIFICATE
+  ACADEMIC_RECORD
+  INSTITUTION
+  INCOME
+  DOMICILE
+  DISABILITY
+  NET_JRF
+}
+
+enum SourceSystem {
+  DIGILOCKER
+  AISHE
+  UDISE
+  APAAR
+  UIDAI
+  E_DISTRICT
+  UGC_NTA
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  MISMATCH
+  MANUAL_REVIEW
+}
+
+enum DisbursementStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+
+  student   Student?
+}
+
+model Student {
+  id               String   @id @default(uuid())
+  userId           String?  @unique
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  dob              String
+  gender           String
+  aadhaarHash      String   // Encrypted/Hashed Aadhaar
+  stCertificateRef String
+  phone            String   @unique
+  email            String   @unique
+  state            String
+  district         String
+  bankAccountRef   String   // Encrypted Bank Account Ref
+  createdAt        DateTime @default(now())
+
+  applications     Application[]
+  documents        Document[]
+}
+
+model Scheme {
+  id              String   @id @default(uuid())
+  name            String   @unique // e.g. "Pre-Matric Scholarship", "Post-Matric Scholarship", "Top Class Education Scheme", "National Fellowship for ST (NFST)", "National Overseas Scholarship (NOS)"
+  code            String   @unique // PRE_MATRIC, POST_MATRIC, TOP_CLASS, NFST, NOS
+  description     String
+  maxAmount       Float
+  eligibilityJson String   // JSON string of rules (income limit, state, degree)
+
+  applications    Application[]
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  studentId    String
+  student      Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  schemeId     String
+  scheme       Scheme            @relation(fields: [schemeId], references: [id])
+  status       ApplicationStatus @default(DRAFT)
+  academicYear String
+  submittedAt  DateTime?
+
+  verifications VerificationCheck[]
+  sanctions     Sanction[]
+  reusedDocs    Document[]          @relation("ReusedFromApp")
+}
+
+model VerificationCheck {
+  id            String             @id @default(uuid())
+  applicationId String
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  checkType     CheckType
+  sourceSystem  SourceSystem
+  status        VerificationStatus @default(PENDING)
+  confidenceScore Float             @default(0.0)
+  rawResponseRef String?
+  checkedAt     DateTime           @default(now())
+
+  manualReview  ManualReviewQueue?
+}
+
+model Sanction {
+  id                    String        @id @default(uuid())
+  applicationId         String
+  application           Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  amount                Float
+  sanctionedAt          DateTime      @default(now())
+  sanctioningAuthority  String
+
+  disbursements         Disbursement[]
+}
+
+model Disbursement {
+  id               String             @id @default(uuid())
+  sanctionId       String
+  sanction         Sanction           @relation(fields: [sanctionId], references: [id], onDelete: Cascade)
+  amount           Float
+  dbtTransactionRef String
+  disbursedAt      DateTime           @default(now())
+  status           DisbursementStatus @default(PENDING)
+}
+
+model Document {
+  id                    String       @id @default(uuid())
+  studentId             String
+  student               Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  docType               String       // "ST_CERTIFICATE", "INCOME_CERT", "MARKSHEET", "ID_PROOF"
+  digilockerUri         String
+  uploadedAt            DateTime     @default(now())
+  reusedFromApplicationId String?
+  reusedFromApplication Application? @relation("ReusedFromApp", fields: [reusedFromApplicationId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  timestamp  DateTime @default(now())
+  ipAddress  String
+}
+
+model ManualReviewQueue {
+  id                  String            @id @default(uuid())
+  verificationCheckId String            @unique
+  verificationCheck   VerificationCheck @relation(fields: [verificationCheckId], references: [id], onDelete: Cascade)
+  assignedTo          String?
+  status              String            @default("PENDING") // PENDING, APPROVED, REJECTED
+  notes               String?
+  createdAt           DateTime          @default(now())
+}
