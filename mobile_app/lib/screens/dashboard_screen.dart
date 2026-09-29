@@ -60,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
-          crossAxisAlignment: CrossAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               state.currentLanguage == 'hi' ? 'एकविद्या - एसटी डैशबोर्ड' : 'EkVidya - Unified ST Dashboard',

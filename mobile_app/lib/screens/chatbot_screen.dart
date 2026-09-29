@@ -70,7 +70,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         backgroundColor: Colors.teal.shade800,
         foregroundColor: Colors.white,
         title: Column(
-          crossAxisAlignment: CrossAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(isHindi ? 'एकविद्या एआई सहायक' : 'EkVidya AI Chatbot'),
             const Text(

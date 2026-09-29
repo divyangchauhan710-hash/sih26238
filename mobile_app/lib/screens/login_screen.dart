@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
-                      crossAxisAlignment: CrossAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
                           isOtpStep

@@ -94,7 +94,7 @@ class SummaryStrip extends StatelessWidget {
 
   Widget _buildSummaryItem(String label, String value, Color valueColor) {
     return Column(
-      crossAxisAlignment: CrossAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,

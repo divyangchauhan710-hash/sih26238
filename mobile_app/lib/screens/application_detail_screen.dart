@@ -50,7 +50,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Application Card Header
             Card(
@@ -59,7 +59,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,7 +110,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(14.0),
                 child: Column(
-                  crossAxisAlignment: CrossAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: const [

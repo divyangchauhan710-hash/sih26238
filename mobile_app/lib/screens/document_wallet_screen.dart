@@ -78,7 +78,7 @@ class DocumentWalletScreen extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     subtitle: Column(
-                      crossAxisAlignment: CrossAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
                         Text('URI: ${doc.digilockerUri}', style: const TextStyle(fontSize: 12, color: Colors.grey)),

@@ -71,7 +71,7 @@ class TimelineWidget extends StatelessWidget {
     final color = isDone ? Colors.green : (isCurrent ? Colors.orange : Colors.grey);
 
     return Row(
-      crossAxisAlignment: CrossAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 24,
@@ -95,7 +95,7 @@ class TimelineWidget extends StatelessWidget {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
@@ -122,7 +122,7 @@ class TimelineWidget extends StatelessWidget {
     final color = isDone ? Colors.green : (isCurrent ? Colors.orange : Colors.grey);
 
     return Row(
-      crossAxisAlignment: CrossAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 24,
@@ -139,7 +139,7 @@ class TimelineWidget extends StatelessWidget {
               border: Border.all(color: color.withOpacity(0.3)),
             ),
             child: Column(
-              crossAxisAlignment: CrossAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Stage 2: Multi-Agency Verifications',
