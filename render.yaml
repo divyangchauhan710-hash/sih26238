@@ -21,4 +21,6 @@ services:
 
 databases:
   - name: ekvidya-db
+    databaseName: ekvidya_db
+    user: ekvidya_user
     plan: free
