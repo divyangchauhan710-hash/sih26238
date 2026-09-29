@@ -1,8 +1,11 @@
+version: "1"
+
 services:
   - type: web
     name: ekvidya-backend
-    env: node
+    runtime: node
     plan: free
+    region: oregon
     buildCommand: cd backend && npm install && npm run build && npx prisma db push && npx prisma db seed
     startCommand: cd backend && npm start
     envVars:
@@ -24,3 +27,4 @@ databases:
     databaseName: ekvidya_db
     user: ekvidya_user
     plan: free
+    region: oregon
