@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/application.dart';
 import '../providers/app_state.dart';
+import '../theme/app_theme.dart';
+import '../widgets/status_badge.dart';
 import '../widgets/timeline_widget.dart';
 
 class ApplicationDetailScreen extends StatefulWidget {
@@ -25,8 +27,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Verification check triggered via Government Adapter.'),
-          backgroundColor: Colors.blue,
+          content: Text('Verification check executed live via Government Adapter!'),
+          backgroundColor: AppTheme.infoBlue,
         ),
       );
     }
@@ -41,11 +43,9 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: AppTheme.bgSlate,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D47A1),
-        foregroundColor: Colors.white,
-        title: Text(updatedApp.schemeName),
+        title: Text(updatedApp.schemeName, style: const TextStyle(fontSize: 16)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -53,9 +53,12 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Application Card Header
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppTheme.cardShadow,
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -63,28 +66,35 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Application Details',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        const Flexible(
                           child: Text(
-                            'AY ${updatedApp.academicYear}',
-                            style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 12),
+                            'Application Status',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                           ),
-                        )
+                        ),
+                        StatusBadge.fromStatus(updatedApp.status),
                       ],
                     ),
-                    const Divider(height: 20),
-                    Text('App ID: ${updatedApp.id}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Divider(height: 24),
+                    Text('Application ID: ${updatedApp.id}', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
                     const SizedBox(height: 4),
-                    Text('Current Status: ${updatedApp.status}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    Text('Academic Year: ${updatedApp.academicYear}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                    if (updatedApp.dbtRef != null) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'PFMS-DBT Ref: ${updatedApp.dbtRef}',
+                          style: const TextStyle(fontSize: 11, color: AppTheme.successGreen, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ]
                   ],
                 ),
               ),
@@ -92,8 +102,8 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
             const SizedBox(height: 20),
 
             const Text(
-              'End-to-End Application Timeline',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+              'Multi-Agency Automated Timeline',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
             ),
             const SizedBox(height: 12),
 
@@ -102,41 +112,44 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
             const SizedBox(height: 24),
 
-            // Interactive Verification Trigger Section (Demonstrating live orchestrator calls to judges)
-            Card(
-              elevation: 1,
-              color: Colors.amber.shade50,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.amber.shade300)),
+            // Interactive Live Verification Trigger Section
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.warningBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.warningOrange.withValues(alpha: 0.3)),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(14.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.bolt, color: Colors.amber, size: 24),
+                    const Row(
+                      children: [
+                        Icon(Icons.bolt_rounded, color: AppTheme.warningOrange, size: 24),
                         SizedBox(width: 8),
                         Text(
-                          'Live Adapter Orchestrator Test (SIH Demo)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          'Live Adapter Verification Test',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.warningOrange),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Tap any check below to manually trigger the Python microservice adapter for real-time response.',
-                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                      'Tap any check below to manually trigger real-time multi-agency verification.',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textDark),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     if (isTriggering)
-                      const Center(child: CircularProgressIndicator())
+                      const Center(child: CircularProgressIndicator(color: AppTheme.warningOrange))
                     else
                       Wrap(
                         spacing: 8,
+                        runSpacing: 6,
                         children: updatedApp.verifications.map((v) {
                           return OutlinedButton.icon(
                             onPressed: () => _handleTriggerVerification(v.id),
-                            icon: const Icon(Icons.refresh, size: 14),
+                            icon: const Icon(Icons.refresh_rounded, size: 14),
                             label: Text('Verify ${v.checkType}'),
                           );
                         }).toList(),

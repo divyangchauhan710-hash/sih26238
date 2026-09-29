@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/app_state.dart';
+import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/admin_review_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),
@@ -23,17 +25,9 @@ class EkVidyaApp extends StatelessWidget {
     return Consumer<AppState>(
       builder: (context, state, child) {
         return MaterialApp(
-          title: 'EkVidya - Unified ST Scholarship Mobile App',
+          title: 'EkVidya - Unified ST Scholarship Mobile Platform',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primaryColor: const Color(0xFF0D47A1),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF0D47A1),
-              secondary: Colors.teal.shade700,
-            ),
-            useMaterial3: true,
-            fontFamily: 'Roboto',
-          ),
+          theme: AppTheme.theme,
           locale: Locale(state.currentLanguage),
           supportedLocales: const [
             Locale('en', ''),

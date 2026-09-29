@@ -43,6 +43,13 @@ export async function registerStudent(req: Request, res: Response) {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
+    const existingStudent = await prisma.student.findFirst({
+      where: { OR: [{ email }, { phone }] }
+    });
+    if (existingStudent) {
+      return res.status(400).json({ error: 'Student with this email or mobile phone number already exists' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const aadhaarHash = encryptField(aadhaarNumber);
     const bankAccountRef = encryptField(bankAccountNumber);

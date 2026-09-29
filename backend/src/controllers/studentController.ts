@@ -140,7 +140,38 @@ export async function getStudentProfile(req: Request, res: Response) {
       aadhaarMasked: 'XXXX-XXXX-'.concat(decryptField(student.aadhaarHash).slice(-4)),
       bankAccountDecrypted: decryptField(student.bankAccountRef)
     });
-  } catch (error) {
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (error: any) {
+    console.error('Get Student Profile error:', error);
+    return res.status(500).json({ error: 'Failed to fetch profile' });
   }
 }
+export async function updateStudentProfile(req: Request, res: Response) {
+  try {
+    const studentId = req.params.id;
+
+    if (req.user?.role === 'STUDENT' && req.user.studentId !== studentId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { name, phone, state, district, stCertificateRef } = req.body;
+
+    const updated = await prisma.student.update({
+      where: { id: studentId },
+      data: {
+        ...(name && { name }),
+        ...(phone && { phone }),
+        ...(state && { state }),
+        ...(district && { district }),
+        ...(stCertificateRef && { stCertificateRef }),
+      }
+    });
+
+    await logAudit(req.user?.userId || 'SYSTEM', 'UPDATE_STUDENT_PROFILE', 'Student', studentId, req);
+
+    return res.json({ message: 'Profile updated successfully', student: updated });
+  } catch (error: any) {
+    console.error('Update Profile error:', error);
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
+}
+

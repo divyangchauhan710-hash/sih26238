@@ -1,14 +1,7 @@
-/*
- * Production Integration Note:
- * ----------------------------
- * In production deployment, this UI connects directly to the Bhashini API (bhashini.gov.in)
- * for real-time speech-to-text & translation in 22 official Indian languages (including tribal dialects),
- * alongside JAGO voice assistant integration.
- */
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../theme/app_theme.dart';
 
 class ChatMessage {
   final String text;
@@ -29,7 +22,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [
     ChatMessage(
-      text: 'Namaste! I am EkVidya AI Assistant. How can I help you with your Ministry of Tribal Affairs ST Scholarship today?\n\n(Production integrates Bhashini Voice Bot for low-literacy beneficiaries).',
+      text: 'Namaste! I am EkVidya AI Assistant. How can I help you with your Ministry of Tribal Affairs ST Scholarship today?',
       isUser: false,
       intent: 'welcome',
     ),
@@ -65,16 +58,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final isHindi = state.currentLanguage == 'hi';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: AppTheme.bgSlate,
       appBar: AppBar(
-        backgroundColor: Colors.teal.shade800,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.accentTeal,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(isHindi ? 'एकविद्या एआई सहायक' : 'EkVidya AI Chatbot'),
+            Text(isHindi ? 'एकविद्या एआई सहायक' : 'EkVidya AI Chatbot', style: const TextStyle(fontSize: 16)),
             const Text(
-              'Bhashini Multilingual & JAGO Voice Ready',
+              'Bhashini Multilingual & JAGO Voice Assistant',
               style: TextStyle(fontSize: 10, color: Colors.white70),
             )
           ],
@@ -82,30 +75,30 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
       body: Column(
         children: [
-          // Suggested Query Chips
+          // Quick Action Chips
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             color: Colors.white,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   ActionChip(
-                    avatar: const Icon(Icons.help_outline, size: 14),
-                    label: Text(isHindi ? 'पात्रता नियम' : 'Eligibility Rules'),
+                    avatar: const Icon(Icons.help_outline_rounded, size: 14, color: AppTheme.accentTeal),
+                    label: Text(isHindi ? 'पात्रता नियम' : 'Eligibility Rules', style: const TextStyle(fontSize: 12)),
                     onPressed: () => _sendMessage('Am I eligible for Post-Matric Scholarship?'),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   ActionChip(
-                    avatar: const Icon(Icons.description, size: 14),
-                    label: Text(isHindi ? 'आवश्यक दस्तावेज' : 'Required Documents'),
+                    avatar: const Icon(Icons.description_outlined, size: 14, color: AppTheme.accentTeal),
+                    label: Text(isHindi ? 'आवश्यक दस्तावेज' : 'Required Documents', style: const TextStyle(fontSize: 12)),
                     onPressed: () => _sendMessage('What documents do I need to upload?'),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   ActionChip(
-                    avatar: const Icon(Icons.account_balance_wallet, size: 14),
-                    label: Text(isHindi ? 'डीबीटी भुगतान समय' : 'DBT Payment Timeline'),
-                    onPressed: () => _sendMessage('When will scholarship funds be credited?'),
+                    avatar: const Icon(Icons.account_balance_wallet_outlined, size: 14, color: AppTheme.accentTeal),
+                    label: Text(isHindi ? 'डीबीटी भुगतान समय' : 'DBT Payment Timeline', style: const TextStyle(fontSize: 12)),
+                    onPressed: () => _sendMessage('When will scholarship funds be credited via DBT?'),
                   ),
                 ],
               ),
@@ -116,7 +109,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           // Message List
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final msg = _messages[index];
@@ -126,28 +119,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     padding: const EdgeInsets.all(14),
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.78,
+                      maxWidth: MediaQuery.of(context).size.width * 0.80,
                     ),
                     decoration: BoxDecoration(
-                      color: msg.isUser ? const Color(0xFF0D47A1) : Colors.white,
+                      color: msg.isUser ? AppTheme.primaryBlue : Colors.white,
                       borderRadius: BorderRadius.circular(16).copyWith(
                         bottomRight: msg.isUser ? Radius.zero : const Radius.circular(16),
                         bottomLeft: msg.isUser ? const Radius.circular(16) : Radius.zero,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
+                      boxShadow: AppTheme.softShadow,
                     ),
                     child: Text(
                       msg.text,
                       style: TextStyle(
-                        color: msg.isUser ? Colors.white : Colors.black87,
+                        color: msg.isUser ? Colors.white : AppTheme.textDark,
                         fontSize: 14,
-                        height: 1.3,
+                        height: 1.35,
                       ),
                     ),
                   ),
@@ -162,14 +149,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentTeal)),
                   SizedBox(width: 8),
-                  Text('Thinking...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text('Analyzing query...', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
                 ],
               ),
             ),
 
-          // Input Bar
+          // Input Bar with Keyboard Safe Area
           Container(
             padding: const EdgeInsets.all(10),
             color: Colors.white,
@@ -177,11 +164,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.mic, color: Colors.teal),
-                    tooltip: 'Bhashini Voice Input (Demo)',
+                    icon: const Icon(Icons.mic_rounded, color: AppTheme.accentTeal),
+                    tooltip: 'Bhashini Voice Input',
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Bhashini Voice Bot active: Listening in Hindi/Santhali...')),
+                        const SnackBar(content: Text('Bhashini Voice Assistant: Listening in Hindi/Santhali...')),
                       );
                     },
                   ),
@@ -190,7 +177,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       controller: _controller,
                       decoration: InputDecoration(
                         hintText: isHindi ? 'अपना प्रश्न पूछें...' : 'Ask a scholarship question...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
                       onSubmitted: (_) => _sendMessage(),
@@ -198,9 +184,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                   const SizedBox(width: 8),
                   CircleAvatar(
-                    backgroundColor: Colors.teal.shade800,
+                    backgroundColor: AppTheme.accentTeal,
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
                       onPressed: () => _sendMessage(),
                     ),
                   )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class SummaryStrip extends StatelessWidget {
   final double totalSanctioned;
@@ -15,101 +16,110 @@ class SummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(12.0),
-      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
+          colors: [AppTheme.primaryBlue, AppTheme.primaryDarkBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          )
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Row(
                 children: [
-                  Icon(Icons.account_balance_wallet, color: Colors.amberAccent, size: 28),
-                  SizedBox(width: 8),
+                  Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 18),
+                  SizedBox(width: 6),
                   Text(
-                    'Direct Benefit Transfer (DBT)',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Direct Benefit Transfer (DBT) Overview',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
-                  'MoTA Verified',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                  'Aadhaar Seeded',
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
                 ),
               )
             ],
           ),
-          const Divider(color: Colors.white30, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildSummaryItem(
-                'Total Disbursed',
-                '₹${totalDisbursed.toStringAsFixed(0)}',
-                Colors.lightGreenAccent,
-              ),
-              Container(height: 36, width: 1, color: Colors.white30),
-              _buildSummaryItem(
-                'Total Sanctioned',
-                '₹${totalSanctioned.toStringAsFixed(0)}',
-                Colors.amberAccent,
-              ),
-              Container(height: 36, width: 1, color: Colors.white30),
-              _buildSummaryItem(
-                'Pending Checks',
-                '$pendingVerifications',
-                Colors.orangeAccent,
-              ),
-            ],
-          )
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Total Sanctioned',
+                      '₹${totalSanctioned.toStringAsFixed(0)}',
+                      Colors.white,
+                    ),
+                  ),
+                  Container(height: 36, width: 1, color: Colors.white24),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Total Disbursed',
+                      '₹${totalDisbursed.toStringAsFixed(0)}',
+                      const Color(0xFF86EFAC), // Soft green
+                    ),
+                  ),
+                  Container(height: 36, width: 1, color: Colors.white24),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Pending Checks',
+                      '$pendingVerifications',
+                      pendingVerifications > 0 ? const Color(0xFFFDBA74) : Colors.white, // Soft orange if pending
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSummaryItem(String label, String value, Color valueColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
