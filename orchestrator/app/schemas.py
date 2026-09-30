@@ -12,8 +12,19 @@ class VerificationResponse(BaseModel):
     details: Dict[str, Any]
 
 class ChatbotRequest(BaseModel):
-    query: str
-    language: Optional[str] = "en"  # "en" or "hi"
+    query: Optional[str] = None
+    message: Optional[str] = None
+    language: Optional[str] = "en"
+    target_language: Optional[str] = None
+    student_context: Optional[Dict[str, Any]] = None
+
+    @property
+    def get_query(self) -> str:
+        return self.message or self.query or ""
+
+    @property
+    def get_lang(self) -> str:
+        return self.target_language or self.language or "en"
 
 class ChatbotResponse(BaseModel):
     query: str

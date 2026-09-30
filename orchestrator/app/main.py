@@ -66,7 +66,9 @@ def run_verification(payload: VerificationRequest):
 
 @app.post("/chatbot/query", response_model=ChatbotResponse)
 def query_chatbot(payload: ChatbotRequest):
-    res = process_query(payload.query, payload.language or "en")
+    query_str = payload.get_query
+    lang_str = payload.get_lang
+    res = process_query(query_str, lang_str, payload.student_context)
     return ChatbotResponse(
         query=res["query"],
         matched_intent=res["matched_intent"],

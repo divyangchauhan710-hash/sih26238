@@ -359,13 +359,19 @@ class ApiService {
   }
 
   // Chatbot Query (Calls POST /chatbot/query)
-  Future<Map<String, dynamic>> askChatbot(String query, String lang) async {
+  Future<Map<String, dynamic>> askChatbot(String query, String lang, {String? studentId}) async {
     try {
       final response = await _authenticatedRequest((headers) => http.post(
             Uri.parse('${AppConfig.apiBaseUrl}/chatbot/query'),
             headers: headers,
-            body: jsonEncode({'query': query, 'language': lang}),
-          )).timeout(const Duration(seconds: 4));
+            body: jsonEncode({
+              'query': query,
+              'message': query,
+              'language': lang,
+              'target_language': lang,
+              'studentId': studentId,
+            }),
+          )).timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
