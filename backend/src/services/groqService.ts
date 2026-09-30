@@ -7,16 +7,16 @@ function getGroqApiKey(): string {
   if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.trim().length > 10) {
     return process.env.GROQ_API_KEY.trim();
   }
-  try {
-    const encoded = 'Z3NrX0owZG1pRzVDUHAwT3FINGdXUHFSV0dkeTNyRlhIbDBQZHJSbVZ2cUE1UFVDeUZxM1BNMWc=';
-    return Buffer.from(encoded, 'base64').toString('utf-8');
-  } catch (_) {
-    return '';
-  }
+  return '';
 }
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const CANDIDATE_MODELS = ['qwen/qwen3.8-27b', 'allam-2-7b', 'openai/gpt-oss-120b'];
+const CANDIDATE_MODELS = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'llama3-70b-8192',
+  'qwen/qwen3.8-27b'
+];
 
 export async function getStudentContext(studentId: string | null | undefined) {
   if (!studentId) return null;
@@ -116,6 +116,7 @@ INSTRUCTIONS:
   if (apiKey) {
     for (const model of CANDIDATE_MODELS) {
       try {
+        console.log(`🤖 Invoking Groq API model [${model}] for query: "${userQuery}"...`);
         const response = await fetch(GROQ_API_URL, {
           method: 'POST',
           headers: {
@@ -137,16 +138,22 @@ INSTRUCTIONS:
           const data = await response.json() as any;
           const content = data.choices?.[0]?.message?.content;
           if (content && content.trim().length > 0) {
+            console.log(`✅ Live Groq LLM Response Received (${model})`);
             return content.trim();
           }
+        } else {
+          const errText = await response.text();
+          console.error(`❌ Groq API Error (${model}) HTTP ${response.status}:`, errText);
         }
       } catch (error) {
-        console.error(`Groq model ${model} error:`, error);
+        console.error(`❌ Groq model ${model} exception:`, error);
       }
     }
+  } else {
+    console.log('⚠️ GROQ_API_KEY environment variable is not set on server. Using context-aware generator.');
   }
 
-  // Context-aware intelligent fallback generator
+  // Context-aware fallback generator
   return buildIntelligentFallback(userQuery, lang, studentContext);
 }
 

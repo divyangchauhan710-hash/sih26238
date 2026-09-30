@@ -7,22 +7,20 @@ Grounds responses in student's real database context and 5 MoTA ST scholarship s
 
 import os
 import json
-import base64
 import requests
 from typing import Dict, Any
 
 def get_groq_api_key() -> str:
     key = os.getenv("GROQ_API_KEY", "")
-    if key and len(key.strip()) > 10:
-        return key.strip()
-    try:
-        encoded = "Z3NrX0owZG1pRzVDUHAwT3FINGdXUHFSV0dkeTNyRlhIbDBQZHJSbVZ2cUE1UFVDeUZxM1BNMWc="
-        return base64.b64decode(encoded).decode("utf-8")
-    except Exception:
-        return ""
+    return key.strip() if key else ""
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-CANDIDATE_MODELS = ["qwen/qwen3.8-27b", "allam-2-7b", "openai/gpt-oss-120b"]
+CANDIDATE_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "qwen/qwen3.8-27b"
+]
 
 def build_system_prompt(student_context: Dict[str, Any], target_language: str) -> str:
     lang = (target_language or "en").lower()
@@ -85,6 +83,8 @@ def ask_assistant(user_message: str, student_context: Dict[str, Any] = None, tar
                     content = data["choices"][0]["message"]["content"]
                     if content and len(content.strip()) > 0:
                         return content.strip()
+                else:
+                    print(f"Groq API Error ({model}) HTTP {response.status_code}: {response.text}")
             except Exception as e:
                 print(f"Groq model {model} exception: {e}")
 
