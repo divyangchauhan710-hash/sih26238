@@ -10,8 +10,36 @@ function getGeminiApiKey(): string {
   return '';
 }
 
-function getGeminiModel(): string {
-  return (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+const CANDIDATE_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-flash-latest'
+];
+
+function detectLanguage(userQuery: string, targetLanguage: string): string {
+  const tLang = (targetLanguage || 'en').toLowerCase();
+  if (tLang === 'hi' || tLang === 'hindi') return 'hi';
+
+  const q = (userQuery || '').toLowerCase();
+  const devanagariRegex = /[\u0900-\u097F]/;
+  if (devanagariRegex.test(userQuery)) return 'hi';
+
+  const hindiKeywords = [
+    'hindi', 'हिंदी', 'jvab', 'jawaab', 'jawab', 'batao', 'bataiye', 'kya', 'mera', 'meri', 'mere',
+    'kaise', 'kab', 'aayega', 'aayegi', 'hai', 'hain', 'karo', 'kripya', 'namaste', 'shukriya', 'me', 'mein', 'do'
+  ];
+
+  if (q.includes('hindi me') || q.includes('hindi mein') || q.includes('in hindi') || q.includes('hindi mai')) {
+    return 'hi';
+  }
+
+  const words = q.split(/\s+/);
+  const matchCount = words.filter(w => hindiKeywords.includes(w)).length;
+  if (matchCount >= 1) {
+    return 'hi';
+  }
+
+  return 'en';
 }
 
 export async function getStudentContext(studentId: string | null | undefined) {
@@ -83,11 +111,11 @@ export async function askGeminiAssistant(
   studentContext: any = null
 ): Promise<string> {
   const apiKey = getGeminiApiKey();
-  const modelName = getGeminiModel();
-  const lang = (targetLanguage || 'en').toLowerCase();
-  const langInstruction = lang === 'hi' || lang === 'hindi'
+  const effectiveLang = detectLanguage(userQuery, targetLanguage);
+  
+  const langInstruction = effectiveLang === 'hi'
     ? 'Respond ONLY in Hindi (using Devanagari script). Be natural, polite, and accurate.'
-    : 'Respond in clear, professional English.';
+    : 'Respond in clear, professional English. If the user query is in Hindi or Hinglish, respond in Hindi (Devanagari script).';
 
   const systemPrompt = `You are EkVidya AI Assistant, the official conversational AI for the Ministry of Tribal Affairs (MoTA), Government of India.
 Your mission is to help Scheduled Tribe (ST) students with scholarship eligibility, required documents, application status tracking, and Direct Benefit Transfer (DBT) disbursements.
@@ -111,47 +139,52 @@ INSTRUCTIONS:
 - Strictly adhere to the CRITICAL LANGUAGE INSTRUCTION!`;
 
   if (apiKey) {
-    try {
-      console.log(`🤖 Invoking Gemini API model [${modelName}] directly for query: "${userQuery}"...`);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          contents: [
-            {
-              parts: [{ text: userQuery }]
-            }
-          ]
-        })
-      });
+    const modelsToTry = [process.env.GEMINI_MODEL, ...CANDIDATE_MODELS].filter(Boolean) as string[];
+    const uniqueModels = Array.from(new Set(modelsToTry));
 
-      if (response.ok) {
-        const data = await response.json() as any;
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (content && content.trim().length > 0) {
-          console.log(`✅ Live Gemini LLM Response Received (${modelName})`);
-          return content.trim();
+    for (const modelName of uniqueModels) {
+      try {
+        console.log(`🤖 Calling Gemini API model [${modelName}] (Detected Lang: ${effectiveLang}) for query: "${userQuery}"...`);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }]
+            },
+            contents: [
+              {
+                parts: [{ text: userQuery }]
+              }
+            ]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json() as any;
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content && content.trim().length > 0) {
+            console.log(`✅ Live Gemini LLM Response Received (${modelName})`);
+            return content.trim();
+          }
+        } else {
+          const errText = await response.text();
+          console.error(`❌ Gemini API Error (${modelName}) HTTP ${response.status}:`, errText);
         }
-      } else {
-        const errText = await response.text();
-        console.error(`❌ Gemini API Error (${modelName}) HTTP ${response.status}:`, errText);
+      } catch (error) {
+        console.error(`❌ Gemini model ${modelName} exception:`, error);
       }
-    } catch (error) {
-      console.error(`❌ Gemini model ${modelName} exception:`, error);
     }
   } else {
     console.log('⚠️ GEMINI_API_KEY environment variable is not set on server.');
   }
 
   // Context-aware fallback generator
-  return buildIntelligentFallback(userQuery, lang, studentContext);
+  return buildIntelligentFallback(userQuery, effectiveLang, studentContext);
 }
 
 function buildIntelligentFallback(userQuery: string, lang: string, studentContext: any): string {
@@ -174,7 +207,7 @@ function buildIntelligentFallback(userQuery: string, lang: string, studentContex
 
   if (q.includes('detail') || q.includes('status') || q.includes('application') || q.includes('विवरण') || q.includes('स्थिति') || q.includes('info')) {
     if (isHindi) {
-      return `छात्र विवरण (${name}):\n• राज्य एवं जिला: ${district}, ${state}\n• एसटी योजना: ${schemeName}\n• आवेदन स्थिति: ${appStatus}\n• डिजीलॉकर दस्तावेज़: सत्यापित\n• भुगतान मोड: आधार-संलग्न बैंक खाते में पीएफ姆斯-डीबीटी!`;
+      return `छात्र विवरण (${name}):\n• राज्य एवं जिला: ${district}, ${state}\n• एसटी योजना: ${schemeName}\n• आवेदन स्थिति: ${appStatus}\n• डिजीलॉकर दस्तावेज़: सत्यापित\n• भुगतान मोड: आधार-संलग्न बैंक खाते में पीएफएमएस-डीबीटी!`;
     }
     return `Student Profile & Application Details (${name}):\n• State & District: ${district}, ${state}\n• Active Scheme: ${schemeName}\n• Application Status: ${appStatus}\n• DigiLocker Documents: Verified\n• Disbursement Mode: Direct Benefit Transfer (DBT) via Aadhaar-seeded account!`;
   }

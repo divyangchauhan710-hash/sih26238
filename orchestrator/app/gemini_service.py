@@ -1,38 +1,62 @@
 """
 Gemini LLM Service Module
 =========================
-Handles intelligent, grounded Q&A and multilingual output in a single call using Google Gemini API.
+Handles intelligent, grounded Q&A and multilingual output using Google Gemini API.
 Grounds responses in student's real database context and official MoTA ST scholarship scheme rules.
 """
 
 import os
 import json
+import re
 import requests
 from typing import Dict, Any
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    # Also attempt loading from backend/.env if main .env not loaded
     backend_env = os.path.join(os.path.dirname(__file__), "..", "..", "backend", ".env")
     if os.path.exists(backend_env):
         load_dotenv(backend_env)
 except ImportError:
     pass
 
+CANDIDATE_MODELS = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-flash-latest"
+]
+
 def get_gemini_api_key() -> str:
     key = os.getenv("GEMINI_API_KEY", "")
     return key.strip() if key else ""
 
-def get_gemini_model() -> str:
-    return os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
+def detect_language(user_query: str, target_language: str) -> str:
+    t_lang = (target_language or "en").lower()
+    if t_lang in ["hi", "hindi"]:
+        return "hi"
 
-def build_system_prompt(student_context: Dict[str, Any], target_language: str) -> str:
-    lang = (target_language or "en").lower()
-    if lang in ["hi", "hindi"]:
+    q = (user_query or "").lower()
+    if re.search(r'[\u0900-\u097F]', user_query or ""):
+        return "hi"
+
+    if any(phrase in q for phrase in ["hindi me", "hindi mein", "in hindi", "hindi mai"]):
+        return "hi"
+
+    hindi_keywords = [
+        "hindi", "हिंदी", "jvab", "jawaab", "jawab", "batao", "bataiye", "kya", "mera", "meri", "mere",
+        "kaise", "kab", "aayega", "aayegi", "hai", "hain", "karo", "kripya", "namaste", "shukriya", "me", "mein", "do"
+    ]
+    words = q.split()
+    if any(w in hindi_keywords for w in words):
+        return "hi"
+
+    return "en"
+
+def build_system_prompt(student_context: Dict[str, Any], effective_lang: str) -> str:
+    if effective_lang == "hi":
         lang_instruction = "Respond ONLY in Hindi (using Devanagari script). Be natural, polite, and accurate."
     else:
-        lang_instruction = "Respond in clear, professional English."
+        lang_instruction = "Respond in clear, professional English. If the user query is in Hindi or Hinglish, respond in Hindi (Devanagari script)."
 
     prompt = f"""You are EkVidya AI Assistant, the official conversational AI for the Ministry of Tribal Affairs (MoTA), Government of India.
 Your mission is to help Scheduled Tribe (ST) students with scholarship eligibility, required documents, application status tracking, and Direct Benefit Transfer (DBT) disbursements.
@@ -62,47 +86,56 @@ def ask_assistant(user_message: str, student_context: Dict[str, Any] = None, tar
         return "Please ask a question regarding your scholarship or application status."
 
     api_key = get_gemini_api_key()
-    model_name = get_gemini_model()
-    system_prompt = build_system_prompt(student_context or {}, target_language)
+    effective_lang = detect_language(user_message, target_language)
+    system_prompt = build_system_prompt(student_context or {}, effective_lang)
 
     if api_key:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
-        headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key
-        }
-        payload = {
-            "systemInstruction": {
-                "parts": [{"text": system_prompt}]
-            },
-            "contents": [
-                {
-                    "parts": [{"text": user_message.strip()}]
-                }
-            ]
-        }
+        models_to_try = []
+        env_model = os.getenv("GEMINI_MODEL", "").strip()
+        if env_model:
+            models_to_try.append(env_model)
+        for m in CANDIDATE_MODELS:
+            if m not in models_to_try:
+                models_to_try.append(m)
 
-        try:
-            print(f"[GEMINI] Calling Gemini API [{model_name}] directly for query: \"{user_message}\"...")
-            response = requests.post(url, headers=headers, json=payload, timeout=12)
-            
-            if response.status_code == 200:
-                data = response.json()
-                try:
-                    content = data["candidates"][0]["content"]["parts"][0]["text"]
-                    if content and len(content.strip()) > 0:
-                        print(f"[GEMINI] Live call [{model_name}] succeeded!")
-                        return content.strip()
-                except (KeyError, IndexError) as e:
-                    print(f"[GEMINI] Failed to parse response candidates: {e}, Data: {data}")
-            else:
-                print(f"[GEMINI] API Error HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            print(f"[GEMINI] API request exception: {e}")
+        for model_name in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key
+            }
+            payload = {
+                "systemInstruction": {
+                    "parts": [{"text": system_prompt}]
+                },
+                "contents": [
+                    {
+                        "parts": [{"text": user_message.strip()}]
+                    }
+                ]
+            }
+
+            try:
+                print(f"[GEMINI] Calling Gemini API [{model_name}] (Detected Lang: {effective_lang}) for query: \"{user_message}\"...")
+                response = requests.post(url, headers=headers, json=payload, timeout=12)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    try:
+                        content = data["candidates"][0]["content"]["parts"][0]["text"]
+                        if content and len(content.strip()) > 0:
+                            print(f"[GEMINI] Live call [{model_name}] succeeded!")
+                            return content.strip()
+                    except (KeyError, IndexError) as e:
+                        print(f"[GEMINI] Failed to parse response candidates: {e}, Data: {data}")
+                else:
+                    print(f"[GEMINI] API Error ({model_name}) HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                print(f"[GEMINI] API request exception ({model_name}): {e}")
     else:
         print("[GEMINI] GEMINI_API_KEY environment variable is missing!")
 
-    return build_intelligent_fallback(user_message, target_language, student_context or {})
+    return build_intelligent_fallback(user_message, effective_lang, student_context or {})
 
 def build_intelligent_fallback(userQuery: str, lang: str, studentContext: Dict[str, Any]) -> str:
     q = userQuery.lower()
@@ -132,7 +165,7 @@ def build_intelligent_fallback(userQuery: str, lang: str, studentContext: Dict[s
 
     if any(k in q for k in ["eligible", "rule", "income", "पात्रता"]):
         if isHindi:
-            return "जनजातीय कार्य मंत्रालय (MoTA) पात्रता नियम:\n• प्री-मैट्रिक: कक्षा 9-10, पारिवारिक आय ≤ ₹2.5 लाख/वर्ष\n• पोस्ट-मैट्रिक: कक्षा 10+ एवं डिग्री, आय ≤ ₹2.5 लाख/वर्ष\n• टॉप क्लास (IIT/NIT): आय ≤ ₹6.0 लाख/वर्ष\n• एनएफएसटी (एम.फिल/पीएचडी): ₹31,000/माह स्टाइपेंड\n• एन NOS (विदेश अध्ययन): आय ≤ ₹6.0 लाख/वर्ष, न्यूनतम 55% अंक।"
+            return "जनजातीय कार्य मंत्रालय (MoTA) पात्रता नियम:\n• प्री-मैट्रिक: कक्षा 9-10, पारिवारिक आय ≤ ₹2.5 लाख/वर्ष\n• पोस्ट-मैट्रिक: कक्षा 10+ एवं डिग्री, आय ≤ ₹2.5 लाख/वर्ष\n• टॉप क्लास (IIT/NIT): आय ≤ ₹6.0 लाख/वर्ष\n• एनएफएसटी (एम.फिल/पीएचडी): ₹31,000/माह स्टाइपेंड\n• एनओएस (विदेश अध्ययन): आय ≤ ₹6.0 लाख/वर्ष, न्यूनतम 55% अंक।"
         return "Ministry of Tribal Affairs (MoTA) Eligibility Rules:\n• Pre-Matric: Classes 9-10, income ≤ ₹2.5L/yr\n• Post-Matric: Post Class 10/Degree, income ≤ ₹2.5L/yr\n• Top Class (IITs/NITs): Income ≤ ₹6.0L/yr\n• NFST (M.Phil/Ph.D.): ₹31,000/month stipend\n• NOS (Abroad): Income ≤ ₹6.0L/yr, min 55% marks."
 
     if isHindi:
