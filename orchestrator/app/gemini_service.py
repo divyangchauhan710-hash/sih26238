@@ -30,6 +30,12 @@ def get_gemini_api_key() -> str:
     key = os.getenv("GEMINI_API_KEY", "")
     return key.strip() if key else ""
 
+def get_gemini_model() -> str:
+    env_model = os.getenv("GEMINI_MODEL", "").strip()
+    if env_model:
+        return env_model
+    return CANDIDATE_MODELS[0] if CANDIDATE_MODELS else "gemini-1.5-flash"
+
 def detect_language(user_query: str, target_language: str) -> str:
     t_lang = (target_language or "en").lower()
     if t_lang in ["hi", "hindi"]:
@@ -66,7 +72,7 @@ CRITICAL LANGUAGE INSTRUCTION:
 
 OFFICIAL MOTA ST SCHOLARSHIP SCHEMES RULES:
 1. Pre-Matric Scholarship for ST Students: For Classes 9-10, max income ₹2.5L/yr, amount up to ₹4,000/yr.
-2. Post-Matric Scholarship for ST Students: For post-secondary / degree, max income ₹2.5L/yr, amount up to ₹25,00,000/yr.
+2. Post-Matric Scholarship for ST Students: For post-secondary / degree, max income ₹2.5L/yr, amount up to ₹25,000/yr.
 3. Top Class Education Scheme for ST Students: For IITs, NITs, IIMs, AIIMS, max income ₹6.0L/yr, full tuition coverage up to ₹2,00,000.
 4. National Fellowship for ST Students (NFST): For M.Phil & Ph.D. scholars, stipend ₹31,000+/month.
 5. National Overseas Scholarship for ST Students (NOS): For Master's, Ph.D., Post-Doc abroad, max income ₹6.0L/yr, min 55% marks, up to ₹15,00,000/yr.
