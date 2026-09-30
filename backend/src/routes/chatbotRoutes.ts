@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getStudentContext, askGroqAssistant } from '../services/groqService';
+import { getStudentContext, askGeminiAssistant } from '../services/geminiService';
 import { logAudit } from '../utils/auditLogger';
 
 const router = Router();
@@ -23,8 +23,8 @@ router.post('/query', async (req: Request, res: Response) => {
     }
 
     let answer: string = '';
-    let matchedIntent = 'groq_llm';
-    let providerNote = 'Groq LLM (llama-3.3-70b-versatile)';
+    let matchedIntent = 'gemini_llm';
+    let providerNote = 'Gemini LLM (gemini-3.5-flash-lite)';
 
     // Try FastAPI service first
     try {
@@ -47,14 +47,14 @@ router.post('/query', async (req: Request, res: Response) => {
         providerNote = data.provider_note || providerNote;
       }
     } catch (_) {
-      // FastAPI not running - call Groq direct service in Node
+      // FastAPI not running - call Gemini direct service in Node
     }
 
     if (!answer) {
-      answer = await askGroqAssistant(userQuery, targetLang, studentContext);
+      answer = await askGeminiAssistant(userQuery, targetLang, studentContext);
     }
 
-    console.log(`💬 [GROQ AI RESPONSE]: "${answer.substring(0, 120)}..."\n`);
+    console.log(`💬 [GEMINI AI RESPONSE]: "${answer.substring(0, 120)}..."\n`);
 
     // Log chat exchange for demo/audit purposes
     if ((req as any).user?.userId) {

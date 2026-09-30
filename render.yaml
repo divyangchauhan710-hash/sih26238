@@ -21,7 +21,7 @@ services:
         value: ekvidya_sih26238_refresh_secret_key_456
       - key: ENCRYPTION_KEY
         value: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-      - key: GROQ_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
 
 databases:

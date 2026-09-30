@@ -3,20 +3,16 @@ import { logAudit } from '../utils/auditLogger';
 
 const prisma = new PrismaClient();
 
-function getGroqApiKey(): string {
-  if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.trim().length > 10) {
-    return process.env.GROQ_API_KEY.trim();
+function getGeminiApiKey(): string {
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 10) {
+    return process.env.GEMINI_API_KEY.trim();
   }
   return '';
 }
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const CANDIDATE_MODELS = [
-  'llama-3.3-70b-versatile',
-  'llama-3.1-8b-instant',
-  'llama3-70b-8192',
-  'qwen/qwen3.8-27b'
-];
+function getGeminiModel(): string {
+  return (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+}
 
 export async function getStudentContext(studentId: string | null | undefined) {
   if (!studentId) return null;
@@ -76,17 +72,18 @@ export async function getStudentContext(studentId: string | null | undefined) {
       verifiedDocumentsCount: student.documents.length
     };
   } catch (error) {
-    console.error('Error fetching student context for Groq:', error);
+    console.error('Error fetching student context for Gemini:', error);
     return null;
   }
 }
 
-export async function askGroqAssistant(
+export async function askGeminiAssistant(
   userQuery: string,
   targetLanguage: string = 'en',
   studentContext: any = null
 ): Promise<string> {
-  const apiKey = getGroqApiKey();
+  const apiKey = getGeminiApiKey();
+  const modelName = getGeminiModel();
   const lang = (targetLanguage || 'en').toLowerCase();
   const langInstruction = lang === 'hi' || lang === 'hindi'
     ? 'Respond ONLY in Hindi (using Devanagari script). Be natural, polite, and accurate.'
@@ -114,43 +111,43 @@ INSTRUCTIONS:
 - Strictly adhere to the CRITICAL LANGUAGE INSTRUCTION!`;
 
   if (apiKey) {
-    for (const model of CANDIDATE_MODELS) {
-      try {
-        console.log(`🤖 Invoking Groq API model [${model}] for query: "${userQuery}"...`);
-        const response = await fetch(GROQ_API_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+    try {
+      console.log(`🤖 Invoking Gemini API model [${modelName}] directly for query: "${userQuery}"...`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
           },
-          body: JSON.stringify({
-            model: model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userQuery }
-            ],
-            temperature: 0.3,
-            max_tokens: 1024
-          })
-        });
+          contents: [
+            {
+              parts: [{ text: userQuery }]
+            }
+          ]
+        })
+      });
 
-        if (response.ok) {
-          const data = await response.json() as any;
-          const content = data.choices?.[0]?.message?.content;
-          if (content && content.trim().length > 0) {
-            console.log(`✅ Live Groq LLM Response Received (${model})`);
-            return content.trim();
-          }
-        } else {
-          const errText = await response.text();
-          console.error(`❌ Groq API Error (${model}) HTTP ${response.status}:`, errText);
+      if (response.ok) {
+        const data = await response.json() as any;
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (content && content.trim().length > 0) {
+          console.log(`✅ Live Gemini LLM Response Received (${modelName})`);
+          return content.trim();
         }
-      } catch (error) {
-        console.error(`❌ Groq model ${model} exception:`, error);
+      } else {
+        const errText = await response.text();
+        console.error(`❌ Gemini API Error (${modelName}) HTTP ${response.status}:`, errText);
       }
+    } catch (error) {
+      console.error(`❌ Gemini model ${modelName} exception:`, error);
     }
   } else {
-    console.log('⚠️ GROQ_API_KEY environment variable is not set on server. Using context-aware generator.');
+    console.log('⚠️ GEMINI_API_KEY environment variable is not set on server.');
   }
 
   // Context-aware fallback generator
@@ -177,7 +174,7 @@ function buildIntelligentFallback(userQuery: string, lang: string, studentContex
 
   if (q.includes('detail') || q.includes('status') || q.includes('application') || q.includes('विवरण') || q.includes('स्थिति') || q.includes('info')) {
     if (isHindi) {
-      return `छात्र विवरण (${name}):\n• राज्य एवं जिला: ${district}, ${state}\n• एसटी योजना: ${schemeName}\n• आवेदन स्थिति: ${appStatus}\n• डिजीलॉकर दस्तावेज़: सत्यापित\n• भुगतान मोड: आधार-संलग्न बैंक खाते में पीएफएमएस-डीबीटी!`;
+      return `छात्र विवरण (${name}):\n• राज्य एवं जिला: ${district}, ${state}\n• एसटी योजना: ${schemeName}\n• आवेदन स्थिति: ${appStatus}\n• डिजीलॉकर दस्तावेज़: सत्यापित\n• भुगतान मोड: आधार-संलग्न बैंक खाते में पीएफ姆斯-डीबीटी!`;
     }
     return `Student Profile & Application Details (${name}):\n• State & District: ${district}, ${state}\n• Active Scheme: ${schemeName}\n• Application Status: ${appStatus}\n• DigiLocker Documents: Verified\n• Disbursement Mode: Direct Benefit Transfer (DBT) via Aadhaar-seeded account!`;
   }

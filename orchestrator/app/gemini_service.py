@@ -1,8 +1,8 @@
 """
-Groq LLM Service Module (Multi-model candidate fallback)
-=========================================================
-Handles intelligent, grounded Q&A and multilingual output in a single call.
-Grounds responses in student's real database context and 5 MoTA ST scholarship schemes rules.
+Gemini LLM Service Module
+=========================
+Handles intelligent, grounded Q&A and multilingual output in a single call using Google Gemini API.
+Grounds responses in student's real database context and official MoTA ST scholarship scheme rules.
 """
 
 import os
@@ -10,17 +10,22 @@ import json
 import requests
 from typing import Dict, Any
 
-def get_groq_api_key() -> str:
-    key = os.getenv("GROQ_API_KEY", "")
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    # Also attempt loading from backend/.env if main .env not loaded
+    backend_env = os.path.join(os.path.dirname(__file__), "..", "..", "backend", ".env")
+    if os.path.exists(backend_env):
+        load_dotenv(backend_env)
+except ImportError:
+    pass
+
+def get_gemini_api_key() -> str:
+    key = os.getenv("GEMINI_API_KEY", "")
     return key.strip() if key else ""
 
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-CANDIDATE_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "qwen/qwen3.8-27b"
-]
+def get_gemini_model() -> str:
+    return os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
 
 def build_system_prompt(student_context: Dict[str, Any], target_language: str) -> str:
     lang = (target_language or "en").lower()
@@ -37,7 +42,7 @@ CRITICAL LANGUAGE INSTRUCTION:
 
 OFFICIAL MOTA ST SCHOLARSHIP SCHEMES RULES:
 1. Pre-Matric Scholarship for ST Students: For Classes 9-10, max income ₹2.5L/yr, amount up to ₹4,000/yr.
-2. Post-Matric Scholarship for ST Students: For post-secondary / degree, max income ₹2.5L/yr, amount up to ₹25,000/yr.
+2. Post-Matric Scholarship for ST Students: For post-secondary / degree, max income ₹2.5L/yr, amount up to ₹25,00,000/yr.
 3. Top Class Education Scheme for ST Students: For IITs, NITs, IIMs, AIIMS, max income ₹6.0L/yr, full tuition coverage up to ₹2,00,000.
 4. National Fellowship for ST Students (NFST): For M.Phil & Ph.D. scholars, stipend ₹31,000+/month.
 5. National Overseas Scholarship for ST Students (NOS): For Master's, Ph.D., Post-Doc abroad, max income ₹6.0L/yr, min 55% marks, up to ₹15,00,000/yr.
@@ -56,37 +61,46 @@ def ask_assistant(user_message: str, student_context: Dict[str, Any] = None, tar
     if not user_message or not user_message.strip():
         return "Please ask a question regarding your scholarship or application status."
 
-    apiKey = get_groq_api_key()
+    api_key = get_gemini_api_key()
+    model_name = get_gemini_model()
     system_prompt = build_system_prompt(student_context or {}, target_language)
 
-    if apiKey:
+    if api_key:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
         headers = {
-            "Authorization": f"Bearer {apiKey}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        }
+        payload = {
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "contents": [
+                {
+                    "parts": [{"text": user_message.strip()}]
+                }
+            ]
         }
 
-        for model in CANDIDATE_MODELS:
-            payload = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message.strip()}
-                ],
-                "temperature": 0.3,
-                "max_tokens": 1024
-            }
-
-            try:
-                response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    content = data["choices"][0]["message"]["content"]
+        try:
+            print(f"[GEMINI] Calling Gemini API [{model_name}] directly for query: \"{user_message}\"...")
+            response = requests.post(url, headers=headers, json=payload, timeout=12)
+            
+            if response.status_code == 200:
+                data = response.json()
+                try:
+                    content = data["candidates"][0]["content"]["parts"][0]["text"]
                     if content and len(content.strip()) > 0:
+                        print(f"[GEMINI] Live call [{model_name}] succeeded!")
                         return content.strip()
-                else:
-                    print(f"Groq API Error ({model}) HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                print(f"Groq model {model} exception: {e}")
+                except (KeyError, IndexError) as e:
+                    print(f"[GEMINI] Failed to parse response candidates: {e}, Data: {data}")
+            else:
+                print(f"[GEMINI] API Error HTTP {response.status_code}: {response.text}")
+        except Exception as e:
+            print(f"[GEMINI] API request exception: {e}")
+    else:
+        print("[GEMINI] GEMINI_API_KEY environment variable is missing!")
 
     return build_intelligent_fallback(user_message, target_language, student_context or {})
 
@@ -118,7 +132,7 @@ def build_intelligent_fallback(userQuery: str, lang: str, studentContext: Dict[s
 
     if any(k in q for k in ["eligible", "rule", "income", "पात्रता"]):
         if isHindi:
-            return "जनजातीय कार्य मंत्रालय (MoTA) पात्रता नियम:\n• प्री-मैट्रिक: कक्षा 9-10, पारिवारिक आय ≤ ₹2.5 लाख/वर्ष\n• पोस्ट-मैट्रिक: कक्षा 10+ एवं डिग्री, आय ≤ ₹2.5 लाख/वर्ष\n• टॉप क्लास (IIT/NIT): आय ≤ ₹6.0 लाख/वर्ष\n• एनएफएसटी (एम.फिल/पीएचडी): ₹31,000/माह स्टाइपेंड\n• एनओएस (विदेश अध्ययन): आय ≤ ₹6.0 लाख/वर्ष, न्यूनतम 55% अंक।"
+            return "जनजातीय कार्य मंत्रालय (MoTA) पात्रता नियम:\n• प्री-मैट्रिक: कक्षा 9-10, पारिवारिक आय ≤ ₹2.5 लाख/वर्ष\n• पोस्ट-मैट्रिक: कक्षा 10+ एवं डिग्री, आय ≤ ₹2.5 लाख/वर्ष\n• टॉप क्लास (IIT/NIT): आय ≤ ₹6.0 लाख/वर्ष\n• एनएफएसटी (एम.फिल/पीएचडी): ₹31,000/माह स्टाइपेंड\n• एन NOS (विदेश अध्ययन): आय ≤ ₹6.0 लाख/वर्ष, न्यूनतम 55% अंक।"
         return "Ministry of Tribal Affairs (MoTA) Eligibility Rules:\n• Pre-Matric: Classes 9-10, income ≤ ₹2.5L/yr\n• Post-Matric: Post Class 10/Degree, income ≤ ₹2.5L/yr\n• Top Class (IITs/NITs): Income ≤ ₹6.0L/yr\n• NFST (M.Phil/Ph.D.): ₹31,000/month stipend\n• NOS (Abroad): Income ≤ ₹6.0L/yr, min 55% marks."
 
     if isHindi:
